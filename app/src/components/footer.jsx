@@ -1,11 +1,7 @@
-import { Navbar as BootstrapNavbar, Container, Nav } from 'react-bootstrap'
-
 export const Footer = () => {
     return (
-        <BootstrapNavbar expand="lg" className="bg-body-tertiary" style={{ height: '8vh' }}>
-            <Container fluid>
-                <BootstrapNavbar.Brand href="#">Home</BootstrapNavbar.Brand>
-            </Container>
-        </BootstrapNavbar>
+        <div style={{ position: 'absolute', bottom: '0', width: '100%', display: 'flex', justifyContent: 'center' }}>
+            <p style={{ padding: "15px", color: '#eee' }}>Made by Jacob Schnettler</p>
+        </div>
     )
 }

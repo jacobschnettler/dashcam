@@ -1,6 +1,10 @@
 const fs = require('fs')
 
+const path = require('path'); 
+
 const ffmpeg = require('fluent-ffmpeg');
+
+const { exec } = require('child_process');
 
 const getVideoDuration = (videoPath) => {
     return new Promise((resolve, reject) => {
@@ -19,6 +23,8 @@ const getVideoDuration = (videoPath) => {
 };
 
 const extractThumbnail = (videoPath, thumbnailPath) => {
+    console.log(videoPath)
+
     return new Promise((resolve, reject) => {
         ffmpeg(videoPath)
             .screenshots({
@@ -32,43 +38,75 @@ const extractThumbnail = (videoPath, thumbnailPath) => {
     });
 };
 
+async function flipVideo(inputPath, outputPath) {
+    return new Promise((resolve, reject) => {
+        const command = `ffmpeg -i "${inputPath}" -vf "transpose=2,transpose=2" "${outputPath}"`;
+
+        exec(command, (err, stdout, stderr) => {
+            if (err) {
+                return reject(`Error flipping video: ${stderr || err.message}`);
+            }
+            resolve(stdout);
+        });
+    });
+}
+
 async function postProcessVideo(metadata) {
-    const dir = metadata.date;
-
-    const files = await fs.readdirSync(`${process.env.OUTPUT}/${dir}`)
-
-    var video;
-
-    for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-
-        switch (file) {
-            case 'video.mp4':
-                video = `${process.env.OUTPUT}/${dir}/video.mp4`;
-
-                break;
-        }
-    }
-
     try {
-        await extractThumbnail(video, `${dir}/thumbnail.png`);
+        const dir = metadata.date;
+
+        const files = await fs.readdirSync(`${process.env.OUTPUT}/${dir}`)
+
+        var video;
+
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+
+            switch (file) {
+                case 'video.webm':
+                    video = `${process.env.OUTPUT}/${dir}/video.webm`;
+
+                    break;
+            }
+        }
+
+        try {
+            // video rotation
+            await flipVideo(video, path.join( `${process.env.OUTPUT}/${dir}`, 'rotated.webm'));
+
+            await fs.rmSync(path.join( `${process.env.OUTPUT}/${dir}`, 'video.webm'));
+
+            await fs.renameSync(path.join( `${process.env.OUTPUT}/${dir}`, 'rotated.webm'), path.join( `${process.env.OUTPUT}/${dir}`, 'video.webm'))
+        } catch (err) {
+            console.error('Error flipping video:', err);
+        }
+
+        try {
+            await extractThumbnail(video, `${dir}/thumbnail.png`);
+        } catch (err) {
+            console.log(err)
+        }
+
+        try {
+            const updatedMetadata = {
+                ...metadata,
+                video: `${dir}/video.webm`,
+                thumbnail: `${dir}/thumbnail.png`,
+                length: await getVideoDuration(video),
+                finished: true
+            }
+
+            await fs.writeFileSync(
+                `${process.env.OUTPUT}/${dir}/metadata.json`,
+                JSON.stringify(updatedMetadata),
+                'utf-8'
+            );
+        } catch (err) {
+            console.log(err)
+        }
     } catch (err) {
-
+        console.log(err)
     }
-
-    const updatedMetadata = {
-        ...metadata,
-        video: `${dir}/video.mp4`,
-        thumbnail: `${dir}/thumbnail.png`,
-        length: await getVideoDuration(video),
-        finished: true
-    }
-
-    await fs.writeFileSync(
-        `${process.env.OUTPUT}/${dir}/metadata.json`,
-        JSON.stringify(updatedMetadata),
-        'utf-8'
-    );
 }
 
 module.exports = {

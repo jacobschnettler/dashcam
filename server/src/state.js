@@ -1,6 +1,7 @@
-var isRecording = false;
+const { io } = require("./websocket");
 
-var metadata
+var isRecording = false;
+var metadata;
 
 function setMetadata(data) {
     return metadata = data;
@@ -15,7 +16,11 @@ function fetchIsRecording() {
 }
 
 function toggleRecording() {
-    return isRecording = !isRecording;
+    var updatedBool = !isRecording;
+
+    io.emit('setIsRecording', JSON.stringify(updatedBool));
+
+    return isRecording = updatedBool;
 }
 
 module.exports = {

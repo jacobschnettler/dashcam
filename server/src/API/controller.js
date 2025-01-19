@@ -4,7 +4,8 @@ const logger = require('../logger')
 
 const ffmpeg = require('../ffmpeg')
 
-const { fetchIsRecording, setMetadata, fetchMetadata } = require('../state')
+const { fetchIsRecording, setMetadata, fetchMetadata } = require('../state');
+const { io } = require('../websocket');
 
 const OUTPUT = process.env.OUTPUT;
 
@@ -24,9 +25,20 @@ async function startRecording(req, res) {
 
         setMetadata(metadata);
 
-        ffmpeg.startRecording(metadata)
+        try {
+            await ffmpeg.startRecording(metadata)
 
-        res.sendStatus(200);
+            io.emit('alert', {
+                type: 'success',
+                label: 'Recording Started.'
+            });
+
+            res.sendStatus(200);
+        } catch (err) {
+            console.log(err)
+
+            res.sendStatus(505)
+        }
     } catch (err) {
         logger.log('error', err)
 
@@ -39,6 +51,11 @@ async function startRecording(req, res) {
 async function stopRecording(req, res) {
     try {
         await ffmpeg.stopRecording();
+
+        io.emit('alert', {
+            type: 'error',
+            label: 'Recording Stopped.'
+        });
 
         res.sendStatus(200);
     } catch (err) {
@@ -64,7 +81,8 @@ async function fetchClips(req, res) {
 
                 const metadata = JSON.parse(data);
 
-                clips.push(metadata)
+                if (metadata.finished)
+                    clips.push(metadata);
             } catch (err) {
                 console.log(err)
             }

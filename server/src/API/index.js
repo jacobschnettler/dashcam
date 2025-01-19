@@ -17,6 +17,6 @@ router.get('/download', controller.downloadClip)
 
 router.get('/delete', controller.deleteClip)
 
-router.get('/stream', controller.streamVideo)
+// router.get('/stream', controller.streamVideo)
 
 module.exports = router

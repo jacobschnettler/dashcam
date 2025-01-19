@@ -2,8 +2,10 @@ const fs = require('fs');
 const path = require('path');
 
 const { spawn } = require('child_process');
-const { toggleRecording, fetchMetadata } = require('./state');
+const { toggleRecording } = require('./state');
 const { postProcessVideo } = require('./postprocess');
+
+const { io } = require('./websocket');
 
 let ffmpegProcess = null;
 
@@ -16,59 +18,49 @@ function generateFilename(metadata) {
 }
 
 function startRecording(metadata) {
-    if (ffmpegProcess) return;
+    return new Promise(function (resolve, reject) {
+        if (ffmpegProcess) return;
 
-    const videoDevice = '/dev/video0';
+        const videoDevice = '/dev/video0';
 
-    const filename = generateFilename(metadata);
+        const filename = generateFilename(metadata);
 
-    // ffmpegProcess = spawn('ffmpeg', [
-    //     '-f', 'v4l2',
-    //     '-framerate', '60',
-    //     '-video_size', '1920x1080',
-    //     '-c:v', 'mjpeg',
-    //     '-i', videoDevice,
-    //     '-c:v', 'copy',
-    //     filename
-    // ]);
-
-    try {
-        // ffmpegProcess = spawn('ffmpeg', [
-        //     '-f', 'v4l2',               // Input format
-        //     '-framerate', '60',         // Frame rate
-        //     '-video_size', '1920x1080', // Resolution
-        //     '-i', videoDevice,          // Input device
-        //     '-c:v', 'libx264',          // Encode with H.264
-        //     '-preset', 'ultrafast',     // Set encoding speed/quality tradeoff
-        //     '-pix_fmt', 'yuv420p',      // Ensure compatibility with most players
-        //     filename                    // Output filename
-        // ]);
-
-        ffmpegProcess = spawn('ffmpeg', [
-            '-f', 'v4l2',               // Input format
-            '-framerate', '60',         // Frame rate
-            '-video_size', '1920x1080', // Resolution
-            '-i', videoDevice,          // Input device
-            '-c:v', 'vp8',              // Encode with VP8 for WebM
-            '-b:v', '1M',               // Set video bitrate
-            '-f', 'webm',               // Force output format to WebM
-            filename                    // Output filename with .webm extension
-        ]);
-
-        toggleRecording();
-
-        ffmpegProcess.on('close', (code) => {
-            console.log(`FFmpeg process exited with code ${code}`);
-
-            ffmpegProcess = null;
+        try {
+            ffmpegProcess = spawn('ffmpeg', [
+                '-f', 'v4l2',               // Input format
+                '-framerate', '60',         // Frame rate
+                '-video_size', '1920x1080', // Resolution
+                '-i', videoDevice,          // Input device
+                '-c:v', 'vp8',              // Encode with VP8 for WebM
+                '-b:v', '1M',               // Set video bitrate
+                '-f', 'webm',               // Force output format to WebM
+                filename                    // Output filename with .webm extension
+            ]);
 
             toggleRecording();
 
-            // postProcessVideo(metadata);
-        });
-    } catch (err) {
-        console.log(err)
-    }
+            ffmpegProcess.on('close', (code) => {
+                if (code == 240) {
+                    io.emit('alert', {
+                        type: 'error',
+                        label: 'Error! Device Busy.'
+                    });
+                } else {
+                    postProcessVideo(metadata);
+                }
+
+                ffmpegProcess = null;
+
+                toggleRecording();
+            });
+
+            resolve();
+        } catch (err) {
+            console.log(err)
+
+            reject(err);
+        }
+    })
 }
 
 function stopRecording() {
