@@ -35,7 +35,7 @@ export function ClipsPage() {
                             <a href={`/clips/${clip.date}`}>
                                 <div style={{ cursor: 'pointer', height: "500px", borderRadius: "8px", overflow: 'hidden', textAlign: 'center', position: 'relative', marginBottom: '50px' }}>
                                     <img
-                                        src={`${process.env.REACT_APP_API}/${clip.thumbnail}`}
+                                        src={`/static/${clip.thumbnail}`}
                                         style={{
                                             overflow: 'hidden',
                                             height: '100%',

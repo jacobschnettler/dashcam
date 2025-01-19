@@ -11,7 +11,7 @@ export function AlertsManager({ isRecording }) {
     const [IsRecording, setIsRecording] = isRecording;
 
     useEffect(function () {
-        const socket = io('http://localhost:4000');
+        const socket = io();
 
         socket.on('alert', ({ type, label }) => {
             switch (type) {

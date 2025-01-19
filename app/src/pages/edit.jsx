@@ -34,7 +34,7 @@ export function EditClipPage() {
             {ClipData && (
                 <div style={{ width: '100%', textAlign: 'center', padding: "45px" }}>
                     <video width={1920 * 0.6} height={1080 * 0.6} controls>
-                        <source src={`${process.env.REACT_APP_API}/${ClipData.video}`} type="video/mp4" />
+                        <source src={`/static/${ClipData.video}`} type="video/mp4" />
                         Your browser does not support the video tag.
                     </video>
 

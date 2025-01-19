@@ -1,12 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Navbar, Footer } from './components'
+import { Navbar } from './components'
+
 import { ClipsPage, AudioPage, EditClipPage } from './pages'
-import { toast } from 'react-toastify';
 
 import API from './api'
 
-import { WebcamStream } from './components/stream';
-import { TOAST_CONFIG } from './utils'
 import { AlertsManager } from './alerts';
 
 function App() {
