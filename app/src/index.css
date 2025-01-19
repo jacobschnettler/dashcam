@@ -1,0 +1,9 @@
+.card {
+    background-color: rgb(29, 36, 41) !important;
+    color: #eee !important;
+}
+
+.btn-primary {
+    background-color: rgb(29, 36, 41) !important;
+    border-color: rgb(29, 36, 41) !important;
+}
