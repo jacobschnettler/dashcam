@@ -161,12 +161,12 @@ async function downloadClip(req, res) {
 
         const filePath = `${OUTPUT}/${metadata.video}`;
 
-        // Set the correct MIME type and content disposition for webm files
-        res.setHeader('Content-Type', 'video/webm');
-        res.setHeader('Content-Disposition', `attachment; filename=clip.webm`);
+        // Set the correct MIME type and content disposition for mp4 files
+        res.setHeader('Content-Type', 'video/mp4');
+        res.setHeader('Content-Disposition', `attachment; filename=clip.mp4`);
 
         // Serve the file for download
-        res.download(filePath, 'clip.webm');
+        res.download(filePath, 'clip.mp4');
     } catch (err) {
         console.log(err);
 
